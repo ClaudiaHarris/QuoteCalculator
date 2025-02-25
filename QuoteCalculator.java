@@ -4,13 +4,12 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class QuoteCalculator extends JFrame {
-    private JSpinner ageSpinner, drivingYearsSpinner; // Changed to JSpinner
+    private JSpinner ageSpinner, drivingYearsSpinner;
     private JCheckBox accidentCheckBox;
     private JLabel basePremiumLabel, fullPaymentLabel, downPaymentLabel, remainingLabel, monthlyLabel, agentLabel;
     private JButton contactAgentButton;
 
     public QuoteCalculator() {
-        // Window setup
         setTitle("Insurance Quote Calculator");
         setSize(400, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -28,12 +27,12 @@ public class QuoteCalculator extends JFrame {
         inputPanel.add(new JLabel(""));
 
         inputPanel.add(new JLabel("Age:"));
-        ageSpinner = new JSpinner(new SpinnerNumberModel(18, 16, 120, 1)); // Default 18, min 16, max 120, step 1
+        ageSpinner = new JSpinner(new SpinnerNumberModel(18, 16, 120, 1));
         ageSpinner.setToolTipText("Your age (16-120)");
         inputPanel.add(ageSpinner);
 
         inputPanel.add(new JLabel("Years Driving:"));
-        drivingYearsSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1)); // Default 0, min 0, max 100, step 1
+        drivingYearsSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
         drivingYearsSpinner.setToolTipText("Years of driving experience (0-100)");
         inputPanel.add(drivingYearsSpinner);
 
@@ -71,7 +70,7 @@ public class QuoteCalculator extends JFrame {
         contactAgentButton.setPreferredSize(new Dimension(120, 30));
         contactAgentButton.setToolTipText("Request agent contact after viewing quote");
         contactAgentButton.setEnabled(false);
-        agentLabel = new JLabel("");
+        agentLabel = new JLabel(""); // Still present but less critical now
         agentLabel.setFont(new Font("Arial", Font.ITALIC, 12));
         buttonPanel.add(calculateButton);
         buttonPanel.add(contactAgentButton);
@@ -85,10 +84,9 @@ public class QuoteCalculator extends JFrame {
 
     private void calculateAndDisplay() {
         try {
-            // Get values from spinners
             int age = (Integer) ageSpinner.getValue();
             int drivingYears = (Integer) drivingYearsSpinner.getValue();
-            if (age < 0 || drivingYears < 0) throw new NumberFormatException(); // Already constrained by spinner, but kept for safety
+            if (age < 0 || drivingYears < 0) throw new NumberFormatException();
             boolean hasAccidents = accidentCheckBox.isSelected();
 
             PremiumDetails details = calculatePremium(age, drivingYears, hasAccidents);
@@ -108,8 +106,68 @@ public class QuoteCalculator extends JFrame {
 
     private void showAgentPrompt() {
         int choice = JOptionPane.showConfirmDialog(this, "Would you like to speak to an agent?", "Agent Contact", JOptionPane.YES_NO_OPTION);
-        agentLabel.setText(choice == JOptionPane.YES_OPTION ? "An agent will contact you." : "Thank you!");
-        contactAgentButton.setEnabled(false);
+        if (choice == JOptionPane.YES_OPTION) {
+            // Create a panel for personal info
+            JPanel infoPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+            infoPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+            JTextField nameField = new JTextField(15);
+            JTextField phoneField = new JTextField(15);
+            JTextField emailField = new JTextField(15);
+            String[] contactMethods = {"Phone", "Email"};
+            JComboBox<String> contactMethodBox = new JComboBox<>(contactMethods);
+
+            infoPanel.add(new JLabel("Name:"));
+            infoPanel.add(nameField);
+            infoPanel.add(new JLabel("Phone:"));
+            infoPanel.add(phoneField);
+            infoPanel.add(new JLabel("Email:"));
+            infoPanel.add(emailField);
+            infoPanel.add(new JLabel("Preferred Contact:"));
+            infoPanel.add(contactMethodBox);
+
+            // Show dialog and validate
+            while (true) {
+                int result = JOptionPane.showConfirmDialog(this, infoPanel, "Enter Contact Details", JOptionPane.OK_CANCEL_OPTION);
+                if (result != JOptionPane.OK_OPTION) {
+                    JOptionPane.showMessageDialog(this, "Agent request canceled.", "Canceled", JOptionPane.INFORMATION_MESSAGE);
+                    contactAgentButton.setEnabled(false);
+                    return;
+                }
+
+                String name = nameField.getText().trim();
+                String phone = phoneField.getText().trim();
+                String email = emailField.getText().trim();
+                String contactMethod = (String) contactMethodBox.getSelectedItem();
+
+                // Validation
+                if (name.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Error: Name is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                if (phone.isEmpty() && email.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Error: At least one contact method (phone or email) is required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                if (!phone.isEmpty() && !phone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+                    JOptionPane.showMessageDialog(this, "Error: Phone must be in XXX-XXX-XXXX format.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                if (!email.isEmpty() && !email.matches("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")) {
+                    JOptionPane.showMessageDialog(this, "Error: Invalid email format.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+
+                // Success
+                String contactInfo = phone.isEmpty() ? email : phone;
+                String message = "Agent will contact " + name + " via " + contactMethod.toLowerCase() + " at " + contactInfo;
+                JOptionPane.showMessageDialog(this, message, "Request Submitted", JOptionPane.INFORMATION_MESSAGE);
+                contactAgentButton.setEnabled(false);
+                break;
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Thank you!", "Goodbye", JOptionPane.INFORMATION_MESSAGE);
+            contactAgentButton.setEnabled(false);
+        }
     }
 
     private static PremiumDetails calculatePremium(int age, int drivingYears, boolean hasAccidents) {
