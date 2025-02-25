@@ -1,44 +1,51 @@
 import java.util.Scanner;
 
 public class QuoteCalculator {
+
+  private static PremiumDetails calculatePremium(int age, int drivingYears, boolean hasAccidents) {
+    double basePremium = 500.0;
+
+    // Adjustments to premium
+    if (age < 25) {
+        basePremium += 200.0; // Young driver surcharge
+    } else if (age > 65) {
+        basePremium += 100.0; // Elderly driver surcharge
+    }
+    if (drivingYears < 5) {
+        basePremium += 150.0; // Inexperienced driver surcharge
+    }
+    if (hasAccidents) {
+        basePremium += 300.0; // High-risk driver penalty
+    }
+
+    // Payment calculations
+    double fullPaymentDiscount = basePremium * 0.95; // 5% discount
+    double downPayment = basePremium * 0.10; // 10% down payment
+    double remainingBalance = basePremium - downPayment;
+    double monthlyPayment = remainingBalance / 6;
+
+    return new PremiumDetails(basePremium, fullPaymentDiscount, downPayment, remainingBalance, monthlyPayment);
+  }
+
+
   public static void main(String[] args) {
     Scanner scanner = new Scanner(System.in);
 
      // Get user input and validate
      int age = getValidInt(scanner, "Enter your age: ");
-     
      int drivingYears = getValidInt(scanner, "Enter years of driving experience: ");
-    
      boolean hasAccidents = getValidYesNo(scanner, "Have you had any accidents in the last 5 years? (yes/no): ");
         
-     double basePremium = 500.0;
-
-     // Adjustments to premium amount
-     if (age < 25) {
-      basePremium += 200.0; // Young drivers surcharge
-     } else if (age > 65) {
-        basePremium += 100.0; // Elderly drivers surcharge
-      }
-     if (drivingYears < 5) {
-      basePremium += 150.0; // Inexperienced driver surcharge
-     }
-     if (hasAccidents) {
-      basePremium += 300.0; // High-risk driver penalty
-     }
-
-    // Calculations
-    double fullPaymentDiscount = basePremium * 0.95; //a 5% discount if six-month premium is paid in full
-    double downPayment = basePremium * 0.10; //a 10% downpayment if a monthly plan is setup
-    double remainingBalance = basePremium - downPayment; // the amount that is divided into 6 monthly payments, after downpayment is subtracted
-    double monthlyPayment = remainingBalance / 6; //monthly premium payments
+    //calculate premium details
+    PremiumDetails details = calculatePremium(age, drivingYears, hasAccidents);
 
     // Output
-    System.out.printf("\n--- Payment Breakdown ---\n");
-    System.out.printf("Total Premium: $%.2f%n", basePremium);
-    System.out.printf("With a 5%% discount for full payment: $%.2f%n", fullPaymentDiscount);
-    System.out.printf("Down Payment (due today): $%.2f%n", downPayment);
-    System.out.printf("Remaining Balance: $%.2f%n", remainingBalance);
-    System.out.printf("6 Monthly Payments of: $%.2f each%n", monthlyPayment);
+    System.out.printf("\n--- Payment Breakdown ---%n");
+    System.out.printf("Total Premium: $%.2f%n", details.basePremium);
+    System.out.printf("Full Payment (5%% off): $%.2f%n", details.fullPaymentDiscount);
+    System.out.printf("Down Payment (10%%): $%.2f%n", details.downPayment);
+    System.out.printf("Remaining Balance: $%.2f%n", details.remainingBalance);
+    System.out.printf("6 Monthly Payments: $%.2f each%n", details.monthlyPayment);
 
     // Ask if the user wants to speak to an agent
     scanner.nextLine(); // Consume leftover newline
@@ -54,8 +61,9 @@ public class QuoteCalculator {
 
     scanner.close();
   }
-  
-  // Function to validate integer input
+
+
+  // Two Functions to validate input
   private static int getValidInt(Scanner scanner, String prompt) {
     int attempts = 0;
     int maxAttempts = 5;
@@ -101,4 +109,20 @@ public class QuoteCalculator {
     }
 
   }
+
+  class PremiumDetails {
+    double basePremium;
+    double fullPaymentDiscount;
+    double downPayment;
+    double remainingBalance;
+    double monthlyPayment;
+
+    PremiumDetails(double base, double full, double down, double remaining, double monthly) {
+        this.basePremium = base;
+        this.fullPaymentDiscount = full;
+        this.downPayment = down;
+        this.remainingBalance = remaining;
+        this.monthlyPayment = monthly;
+    }
+}
 
