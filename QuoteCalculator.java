@@ -1,89 +1,107 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
 public class QuoteCalculator extends JFrame {
-    private JTextField ageField, drivingYearsField;
+    private JSpinner ageSpinner, drivingYearsSpinner; // Changed to JSpinner
     private JCheckBox accidentCheckBox;
     private JLabel basePremiumLabel, fullPaymentLabel, downPaymentLabel, remainingLabel, monthlyLabel, agentLabel;
     private JButton contactAgentButton;
 
     public QuoteCalculator() {
+        // Window setup
         setTitle("Insurance Quote Calculator");
-        setSize(350, 300);
+        setSize(400, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(10, 2, 10, 10)); // Increased to 10 rows
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(Color.WHITE);
+        ((JComponent) getContentPane()).setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // Inputs
-        add(new JLabel("Age:"));
-        ageField = new JTextField(5);
-        add(ageField);
+        // Input Panel (NORTH)
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+        inputPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        inputPanel.setBackground(new Color(220, 220, 220));
+        JLabel titleLabel = new JLabel("Enter Your Details", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        inputPanel.add(titleLabel);
+        inputPanel.add(new JLabel(""));
 
-        add(new JLabel("Driving Years:"));
-        drivingYearsField = new JTextField(5);
-        add(drivingYearsField);
+        inputPanel.add(new JLabel("Age:"));
+        ageSpinner = new JSpinner(new SpinnerNumberModel(18, 16, 120, 1)); // Default 18, min 16, max 120, step 1
+        ageSpinner.setToolTipText("Your age (16-120)");
+        inputPanel.add(ageSpinner);
 
-        add(new JLabel("Accidents in Last 5 Years?"));
+        inputPanel.add(new JLabel("Years Driving:"));
+        drivingYearsSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1)); // Default 0, min 0, max 100, step 1
+        drivingYearsSpinner.setToolTipText("Years of driving experience (0-100)");
+        inputPanel.add(drivingYearsSpinner);
+
+        inputPanel.add(new JLabel("Accidents?"));
         accidentCheckBox = new JCheckBox();
-        add(accidentCheckBox);
+        accidentCheckBox.setToolTipText("Check if you’ve had accidents in the last 5 years");
+        inputPanel.add(accidentCheckBox);
+        add(inputPanel, BorderLayout.NORTH);
 
-        // Calculate button
-        JButton calculateButton = new JButton("Calculate Quote");
-        add(calculateButton);
-
-        // Output labels
-        add(new JLabel("")); // Spacer
+        // Output Panel (CENTER)
+        JPanel outputPanel = new JPanel(new GridLayout(5, 1, 0, 10));
+        outputPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        outputPanel.setBackground(new Color(240, 240, 240));
         basePremiumLabel = new JLabel("Total Premium: $0.00");
-        add(basePremiumLabel);
-
         fullPaymentLabel = new JLabel("Full Payment (5% off): $0.00");
-        add(fullPaymentLabel);
-
         downPaymentLabel = new JLabel("Down Payment (10%): $0.00");
-        add(downPaymentLabel);
-
         remainingLabel = new JLabel("Remaining Balance: $0.00");
-        add(remainingLabel);
-
         monthlyLabel = new JLabel("6 Monthly Payments: $0.00");
-        add(monthlyLabel);
+        JLabel[] labels = {basePremiumLabel, fullPaymentLabel, downPaymentLabel, remainingLabel, monthlyLabel};
+        for (JLabel label : labels) {
+            label.setFont(new Font("Arial", Font.PLAIN, 13));
+            label.setHorizontalAlignment(SwingConstants.LEFT);
+            outputPanel.add(label);
+        }
+        add(outputPanel, BorderLayout.CENTER);
 
-        // Agent button and label
+        // Button Panel (SOUTH)
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        buttonPanel.setBackground(new Color(220, 220, 220));
+        JButton calculateButton = new JButton("Calculate Quote");
+        calculateButton.setPreferredSize(new Dimension(120, 30));
+        calculateButton.setToolTipText("Calculate your insurance quote");
         contactAgentButton = new JButton("Contact Agent");
-        contactAgentButton.setEnabled(false); // Disabled until calculation
-        add(contactAgentButton);
-
+        contactAgentButton.setPreferredSize(new Dimension(120, 30));
+        contactAgentButton.setToolTipText("Request agent contact after viewing quote");
+        contactAgentButton.setEnabled(false);
         agentLabel = new JLabel("");
-        add(agentLabel);
+        agentLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        buttonPanel.add(calculateButton);
+        buttonPanel.add(contactAgentButton);
+        buttonPanel.add(agentLabel);
+        add(buttonPanel, BorderLayout.SOUTH);
 
-        // Button actions
+        // Actions
         calculateButton.addActionListener(e -> calculateAndDisplay());
         contactAgentButton.addActionListener(e -> showAgentPrompt());
     }
 
     private void calculateAndDisplay() {
         try {
-            int age = Integer.parseInt(ageField.getText().trim());
-            int drivingYears = Integer.parseInt(drivingYearsField.getText().trim());
-            if (age < 0 || drivingYears < 0) {
-                agentLabel.setText("Error: Use positive numbers.");
-                contactAgentButton.setEnabled(false);
-                return;
-            }
+            // Get values from spinners
+            int age = (Integer) ageSpinner.getValue();
+            int drivingYears = (Integer) drivingYearsSpinner.getValue();
+            if (age < 0 || drivingYears < 0) throw new NumberFormatException(); // Already constrained by spinner, but kept for safety
             boolean hasAccidents = accidentCheckBox.isSelected();
 
             PremiumDetails details = calculatePremium(age, drivingYears, hasAccidents);
-
             basePremiumLabel.setText(String.format("Total Premium: $%.2f", details.basePremium));
             fullPaymentLabel.setText(String.format("Full Payment (5%% off): $%.2f", details.fullPaymentDiscount));
             downPaymentLabel.setText(String.format("Down Payment (10%%): $%.2f", details.downPayment));
             remainingLabel.setText(String.format("Remaining Balance: $%.2f", details.remainingBalance));
             monthlyLabel.setText(String.format("6 Monthly Payments: $%.2f", details.monthlyPayment));
 
-            agentLabel.setText(""); // Clear previous message
-            contactAgentButton.setEnabled(true); // Enable agent button
+            agentLabel.setText("");
+            contactAgentButton.setEnabled(true);
         } catch (NumberFormatException ex) {
-            agentLabel.setText("Error: Enter valid numbers.");
+            agentLabel.setText("Error: Enter valid positive numbers.");
             contactAgentButton.setEnabled(false);
         }
     }
@@ -91,7 +109,7 @@ public class QuoteCalculator extends JFrame {
     private void showAgentPrompt() {
         int choice = JOptionPane.showConfirmDialog(this, "Would you like to speak to an agent?", "Agent Contact", JOptionPane.YES_NO_OPTION);
         agentLabel.setText(choice == JOptionPane.YES_OPTION ? "An agent will contact you." : "Thank you!");
-        contactAgentButton.setEnabled(false); // Disable after use
+        contactAgentButton.setEnabled(false);
     }
 
     private static PremiumDetails calculatePremium(int age, int drivingYears, boolean hasAccidents) {
